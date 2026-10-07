@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Department {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique
+  code       String    @unique
+  created_at DateTime  @default(now())
+  users      User[]
+  projects   Project[]
+}
+
+model User {
+  id                Int      @id @default(autoincrement())
+  name              String
+  email             String   @unique
+  password          String
+  role              String
+  department_id     Int?
+  is_active         Boolean  @default(true)
+  industry_approved Boolean  @default(false)
+  created_at        DateTime @default(now())
+
+  department         Department?         @relation(fields: [department_id], references: [id])
+  postedProjects     Project[]           @relation("PostedBy")
+  supervisedProjects Project[]           @relation("Supervisor")
+  ledTeams           Team[]
+  memberships        TeamMember[]
+  supervisorRequests SupervisorRequest[]
+  notifications      Notification[]
+  chatMessages       ChatMessage[]
+  joinRequests       TeamJoinRequest[]
+  reportComments     ProgressComment[]
+  passwordResets     PasswordReset[]
+  auditLogs          AuditLog[]
+}
+
+model Project {
+  id            Int      @id @default(autoincrement())
+  title         String
+  description   String
+  type          String   @default("ACADEMIC")
+  status        String   @default("PENDING")
+  posted_by     Int
+  department_id Int
+  supervisor_id Int?
+  created_at    DateTime @default(now())
+
+  poster      User                @relation("PostedBy", fields: [posted_by], references: [id], onDelete: Cascade)
+  supervisor  User?               @relation("Supervisor", fields: [supervisor_id], references: [id])
+  department  Department          @relation(fields: [department_id], references: [id])
+  team        Team?
+  supRequests SupervisorRequest[]
+}
+
+model Team {
+  id           Int               @id @default(autoincrement())
+  project_id   Int               @unique
+  leader_id    Int
+  status       String            @default("FORMING")
+  project      Project           @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  leader       User              @relation(fields: [leader_id], references: [id])
+  members      TeamMember[]
+  reports      ProgressReport[]
+  messages     ChatMessage[]
+  joinRequests TeamJoinRequest[]
+}
+
+model TeamMember {
+  id         Int      @id @default(autoincrement())
+  team_id    Int
+  student_id Int
+  joined_at  DateTime @default(now())
+  team       Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
+  student    User     @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@unique([team_id, student_id])
+}
+
+model TeamJoinRequest {
+  id         Int      @id @default(autoincrement())
+  team_id    Int
+  student_id Int
+  status     String   @default("PENDING")
+  created_at DateTime @default(now())
+  team       Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
+  student    User     @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@unique([team_id, student_id])
+}
+
+model ProgressReport {
+  id           Int               @id @default(autoincrement())
+  team_id      Int
+  week         Int
+  description  String
+  file_url     String?
+  submitted_at DateTime          @default(now())
+  team         Team              @relation(fields: [team_id], references: [id], onDelete: Cascade)
+  comments     ProgressComment[]
+
+  @@unique([team_id, week])
+}
+
+model ProgressComment {
+  id         Int            @id @default(autoincrement())
+  report_id  Int
+  author_id  Int
+  content    String
+  created_at DateTime       @default(now())
+  report     ProgressReport @relation(fields: [report_id], references: [id], onDelete: Cascade)
+  author     User           @relation(fields: [author_id], references: [id])
+}
+
+model SupervisorRequest {
+  id            Int      @id @default(autoincrement())
+  project_id    Int
+  instructor_id Int
+  status        String   @default("PENDING")
+  requested_at  DateTime @default(now())
+  project       Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  instructor    User     @relation(fields: [instructor_id], references: [id])
+}
+
+model Notification {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  type       String
+  title      String
+  body       String
+  link       String?
+  read       Boolean  @default(false)
+  created_at DateTime @default(now())
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model ChatMessage {
+  id         Int      @id @default(autoincrement())
+  team_id    Int
+  sender_id  Int
+  content    String
+  created_at DateTime @default(now())
+  team       Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
+  sender     User     @relation(fields: [sender_id], references: [id])
+}
+
+model PasswordReset {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  token      String   @unique
+  expires_at DateTime
+  used       Boolean  @default(false)
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  admin_id   Int
+  action     String
+  target     String
+  details    String?
+  created_at DateTime @default(now())
+  admin      User     @relation(fields: [admin_id], references: [id])
+}

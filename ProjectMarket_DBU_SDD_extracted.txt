@@ -1,0 +1,640 @@
+PROJECTMARKET DBU
+Software Design Document
+Detailed Architecture, Component Design & Data Models
+Document Code:  DBU-SDD-001
+Version:  1.0.0
+Prepared for:  Debre Berhan University (DBU)
+Date:  May 2026
+Classification:  Confidential / Internal
+1. Introduction
+1.1 Purpose
+This Software Design Document (SDD) describes the complete architectural and component-level design of ProjectMarket DBU. It translates the requirements defined in the SRS (DBU-SRS-001) into a concrete technical blueprint for implementation. This document is the authoritative reference for all design decisions made during development.
+1.2 Design Goals
+Separation of Concerns — strict layering of controllers, services, repositories, and models
+Scalability — stateless backend, connection pooling, CDN-served assets
+Security by Design — RBAC enforced at every layer, not just the route
+Developer Experience — typed ORM (Prisma), environment-driven config, clear folder conventions
+Maintainability — versioned API, migration-managed DB schema, inline documentation
+1.3 References
+DBU-SRS-001: Software Requirements Specification
+DBU-RE-001: Requirements Engineering Document
+Prisma ORM Documentation: https://www.prisma.io/docs
+Socket.IO Documentation: https://socket.io/docs
+Cloudinary Developer Guide: https://cloudinary.com/documentation
+2. System Architecture
+2.1 Architectural Style
+ProjectMarket DBU uses a three-tier client-server architecture with a REST API as the communication layer. Real-time features are added as a WebSocket layer running alongside the HTTP server.
+2.2 Tier Overview
+Tier
+Technology
+Responsibility
+Presentation Tier
+React 18 + Vite + Tailwind CSS
+User interface, state management, routing, API calls
+Application Tier
+Node.js 18 + Express 4
+Business logic, REST API, Socket.IO, authentication
+Data Tier
+PostgreSQL 15 via Prisma ORM
+Persistent data storage, schema, relationships
+2.3 High-Level Architecture Diagram
+[ Browser / Mobile ]
+        |
+        | HTTPS (REST)
+        |
+[ React Frontend — Vercel CDN ]
+        |
+        | HTTPS + WSS
+        |
+[ Express REST API + Socket.IO — Render ]
+        |              |
+  [ Prisma ORM ]   [ Cloudinary SDK ]
+        |                  |
+[ PostgreSQL (Neon) ]  [ Cloudinary CDN ]
+2.4 Backend Layered Architecture
+The backend strictly follows a layered architecture to maximize separation of concerns:
+Layer
+Files / Location
+Responsibility
+Route Layer
+src/routes/*.js
+Define URL paths and HTTP verbs; delegate to controllers
+Controller Layer
+src/controllers/*.js
+Handle req/res cycle; call service; return response
+Service Layer
+src/services/*.js
+Contain all business logic; orchestrate operations
+Repository Layer
+src/repositories/*.js
+All Prisma DB queries; no business logic here
+Model Layer
+prisma/schema.prisma
+Define database schema, relations, and enums
+Middleware Layer
+src/middleware/*.js
+Auth, role check, validation, error handling
+Socket Layer
+src/sockets/*.js
+Handle Socket.IO events and room management
+2.5 Technology Stack Detail
+Layer
+Technology
+Key Libraries / Tools
+Frontend
+React 18 + Vite
+react-router-dom, axios, zustand, socket.io-client, react-query
+Styling
+Tailwind CSS 3
+tailwind-merge, clsx, headlessui
+Backend Runtime
+Node.js 18 LTS
+express, cors, helmet, morgan, dotenv
+ORM
+Prisma 5
+prisma/client, prisma migrate, prisma studio
+Authentication
+JWT + bcrypt
+jsonwebtoken, bcryptjs, express-rate-limit
+File Upload
+Cloudinary SDK
+cloudinary, multer (memory storage)
+Real-Time
+Socket.IO 4
+socket.io (server), socket.io-client (frontend)
+Validation
+Zod
+zod, express-zod-api (optional)
+Testing
+Jest + Supertest
+jest, supertest, @prisma/client/testing
+Dev Tools
+ESLint, Prettier, Nodemon
+nodemon, eslint, prettier, cross-env
+3. Component Design
+3.1 Frontend Components
+3.1.1 Application Shell
+Component
+Design Responsibility
+App.jsx
+Root component; wraps AuthProvider and RouterProvider
+AuthProvider.jsx
+Context provider for current user, JWT, and login/logout functions
+RouterConfig.jsx
+React Router v6 routes; applies ProtectedRoute wrapper
+ProtectedRoute.jsx
+HOC that redirects unauthenticated users to /login
+RoleRoute.jsx
+HOC that renders 403 if user's role lacks permission for the route
+3.1.2 Layout Components
+Component
+Design Responsibility
+MainLayout.jsx
+Wraps all authenticated pages with Navbar + Sidebar + content area
+Navbar.jsx
+Top bar with logo, search, NotificationBell, and user avatar menu
+Sidebar.jsx
+Collapsible left nav; renders role-appropriate menu items from config
+PageHeader.jsx
+Reusable page title + breadcrumbs + optional action button
+3.1.3 Feature Components
+Component
+Design Responsibility
+ProjectCard.jsx
+Displays project title, dept, status badge, team size
+ProjectForm.jsx
+Controlled form for creating/editing a project (title, desc, dept)
+TeamCard.jsx
+Shows team leader, members count, and join/view action
+MemberList.jsx
+Renders team member avatars with role labels
+ProgressForm.jsx
+Week selector + description textarea + FileUpload component
+FileUpload.jsx
+Drag-and-drop + click-to-browse; calls Cloudinary upload endpoint
+NotificationBell.jsx
+Socket.IO listener; shows badge count; renders notification dropdown
+ChatBox.jsx
+Socket.IO room-based chat; message list + input form
+SupervisorPicker.jsx
+Instructor list with 'Request' button; shows pending/accepted state
+StatusBadge.jsx
+Color-coded pill for project/team status values
+ProgressBar.jsx
+Visual percent bar; takes value 0-100
+3.2 State Management Design
+The frontend uses a hybrid state approach:
+React Query — for all server-state (API calls, caching, invalidation, loading states)
+Zustand — for global client-state (auth user, sidebar collapse state, notification count)
+React useState/useReducer — for local component state (form values, modal open)
+Socket.IO client — maintains a singleton connection; triggers Zustand state updates
+3.3 API Service Layer (Frontend)
+All API calls are abstracted into service modules under src/services/:
+src/services/
+  authService.js       // login, register, me, logout
+  projectService.js    // CRUD + status update
+  teamService.js       // create, join, leave, approve
+  supervisorService.js // request, respond, list
+  progressService.js   // submit, list, get
+  adminService.js      // users, departments, stats
+  uploadService.js     // Cloudinary pre-signed upload
+Each service uses an axios instance with the base URL and auth interceptor:
+const api = axios.create({ baseURL: import.meta.env.VITE_API_URL });
+api.interceptors.request.use(cfg => {
+  cfg.headers.Authorization = `Bearer ${getToken()}`;
+  return cfg;
+});
+4. Backend Design
+4.1 Express Application Setup
+// app.js
+app.use(helmet());
+app.use(cors({ origin: process.env.CLIENT_URL }));
+app.use(express.json());
+app.use(morgan('dev'));
+app.use('/api/v1', rateLimiter, routes);
+app.use(globalErrorHandler);
+// server.js
+const httpServer = createServer(app);
+const io = new Server(httpServer, { cors: { origin: CLIENT_URL } });
+initSockets(io);
+httpServer.listen(PORT);
+4.2 Middleware Design
+Middleware
+Design & Behavior
+authenticate
+Reads Bearer token from Authorization header; verifies JWT; attaches decoded user to req.user
+authorize(roles)
+Factory function; accepts array of permitted roles; compares with req.user.role; throws 403 if unauthorized
+validate(schema)
+Factory using Zod schema; validates req.body; throws 422 with field errors if invalid
+rateLimiter
+express-rate-limit; 100 req / 15 min on auth routes; 500 req / 15 min on all others
+uploadMiddleware
+multer configured with memory storage; limits files to 10MB; passes buffer to Cloudinary
+errorHandler
+Global async error catcher; maps error types to HTTP codes; never leaks stack traces in production
+4.3 Controller Pattern
+Controllers are thin — they only handle HTTP concerns and delegate to services:
+// controllers/projectController.js
+const createProject = async (req, res, next) => {
+  try {
+    const project = await projectService.createProject(req.user.id, req.body);
+    res.status(201).json({ success: true, data: project });
+  } catch (err) { next(err); }
+};
+4.4 Service Layer Pattern
+All business logic lives in services. Services call repositories, never Prisma directly:
+// services/teamService.js
+const joinTeam = async (teamId, studentId) => {
+  const existing = await teamRepo.getMembership(studentId);
+  if (existing) throw new AppError('Already in a team', 400);
+  const team = await teamRepo.findById(teamId);
+  if (!team) throw new AppError('Team not found', 404);
+  return teamRepo.addMember(teamId, studentId);
+};
+4.5 Repository Pattern
+Repositories contain all Prisma queries. This decouples business logic from the ORM:
+// repositories/teamRepository.js
+const getMembership = (studentId) =>
+  prisma.teamMember.findFirst({ where: { student_id: studentId } });
+const addMember = (teamId, studentId) =>
+  prisma.teamMember.create({ data: { team_id: teamId, student_id: studentId } });
+4.6 Error Handling Design
+Error Type
+HTTP Code
+Trigger
+AppError (custom)
+400 / 403 / 404
+Thrown by services for business rule violations
+ValidationError
+422
+Thrown by Zod validate middleware on bad request body
+AuthenticationError
+401
+Thrown by authenticate middleware when JWT is missing/invalid
+AuthorizationError
+403
+Thrown by authorize middleware when role is insufficient
+PrismaClientError
+500
+Caught by global handler; logged server-side, generic message to client
+Unhandled Rejection
+500
+process.on('unhandledRejection') logs and exits gracefully
+5. Database Design
+5.1 Prisma Schema Overview
+The full Prisma schema is in prisma/schema.prisma. All enums are DB-level types. All relations use explicit foreign key fields with onDelete behaviors defined.
+5.2 Entity Relationship Summary
+Relationship
+Cardinality & Description
+User → Department
+Many-to-One: each user belongs to one department
+Project → User (posted_by)
+Many-to-One: each project has one creator
+Project → User (supervisor_id)
+Many-to-One (nullable): a project may have one supervisor
+Project → Department
+Many-to-One: each project targets one department
+Team → Project
+One-to-One: each project has at most one team
+Team → User (leader_id)
+Many-to-One: each team has one leader
+TeamMember → Team
+Many-to-One: each team member record belongs to a team
+TeamMember → User
+Many-to-One: each record references one student user
+ProgressReport → Team
+Many-to-One: reports belong to a team
+SupervisorRequest → Project
+Many-to-One: request targets a specific project
+SupervisorRequest → User
+Many-to-One: request targets a specific instructor
+5.3 Full Prisma Schema
+Enums
+enum Role         { STUDENT INSTRUCTOR INDUSTRY ADMIN }
+enum ProjectStatus{ OPEN PENDING APPROVED COMPLETED }
+enum TeamStatus   { FORMING ACTIVE DISBANDED }
+enum RequestStatus{ PENDING ACCEPTED REJECTED }
+Users
+model User {
+  id            Int       @id @default(autoincrement())
+  name          String
+  email         String    @unique
+  password      String
+  role          Role
+  department    Department? @relation(fields:[department_id], references:[id])
+  department_id Int?
+  created_at    DateTime  @default(now())
+}
+Projects
+model Project {
+  id            Int           @id @default(autoincrement())
+  title         String
+  description   String
+  status        ProjectStatus @default(OPEN)
+  posted_by     Int
+  department_id Int
+  supervisor_id Int?
+  created_at    DateTime      @default(now())
+  poster        User          @relation('PostedBy', fields:[posted_by], references:[id])
+  supervisor    User?         @relation('Supervisor', fields:[supervisor_id], references:[id])
+  department    Department    @relation(fields:[department_id], references:[id])
+  team          Team?
+  supRequests   SupervisorRequest[]
+}
+Teams & Members
+model Team {
+  id         Int        @id @default(autoincrement())
+  project_id Int        @unique
+  leader_id  Int
+  status     TeamStatus @default(FORMING)
+  project    Project    @relation(fields:[project_id], references:[id])
+  leader     User       @relation(fields:[leader_id], references:[id])
+  members    TeamMember[]
+  reports    ProgressReport[]
+}
+model TeamMember {
+  id         Int      @id @default(autoincrement())
+  team_id    Int
+  student_id Int
+  joined_at  DateTime @default(now())
+  team       Team     @relation(fields:[team_id], references:[id])
+  student    User     @relation(fields:[student_id], references:[id])
+  @@unique([team_id, student_id])
+}
+Progress Reports & Supervisor Requests
+model ProgressReport {
+  id           Int      @id @default(autoincrement())
+  team_id      Int
+  week         Int
+  description  String
+  file_url     String?
+  submitted_at DateTime @default(now())
+  team         Team     @relation(fields:[team_id], references:[id])
+  @@unique([team_id, week])
+}
+model SupervisorRequest {
+  id            Int           @id @default(autoincrement())
+  project_id    Int
+  instructor_id Int
+  status        RequestStatus @default(PENDING)
+  requested_at  DateTime      @default(now())
+  project       Project       @relation(fields:[project_id], references:[id])
+  instructor    User          @relation(fields:[instructor_id], references:[id])
+}
+6. REST API Design
+All endpoints are under /api/v1. Protected routes require: Authorization: Bearer <token>. All responses follow the envelope: { success: boolean, data: any, message?: string }.
+6.1 Response Envelope
+// Success
+{ "success": true,  "data": { ... } }
+// Error
+{ "success": false, "message": "Validation failed", "errors": [ ... ] }
+6.2 Complete API Reference
+Method
+Endpoint
+Auth Required
+Description
+Auth
+POST
+/auth/register
+No
+Register a new user
+POST
+/auth/login
+No
+Login and receive JWT
+GET
+/auth/me
+Yes
+Get authenticated user's profile
+PATCH
+/auth/password
+Yes
+Update password
+Projects
+GET
+/projects
+Yes
+List all projects (search, filter, paginate)
+POST
+/projects
+Student/Industry
+Create a new project
+GET
+/projects/:id
+Yes
+Get project detail
+PATCH
+/projects/:id
+Owner/Admin
+Update project info
+DELETE
+/projects/:id
+Owner/Admin
+Delete project
+PATCH
+/projects/:id/status
+Admin/Dept
+Approve or reject project
+Teams
+POST
+/teams
+Student
+Create a team for a project
+GET
+/teams/:id
+Yes
+Get team details
+POST
+/teams/:id/join
+Student
+Request to join team
+DELETE
+/teams/:id/leave
+Student
+Leave a team
+PATCH
+/teams/:id/approve
+Instructor/Admin
+Approve team formation
+GET
+/teams/:id/members
+Yes
+List team members
+Supervisors
+GET
+/supervisors
+Yes
+List all instructors
+POST
+/supervisors/request
+Student
+Send supervisor request
+GET
+/supervisors/requests
+Instructor
+Incoming supervisor requests
+PATCH
+/supervisors/requests/:id
+Instructor
+Accept or reject request
+Progress Reports
+POST
+/progress-reports
+Student
+Submit weekly report
+GET
+/progress-reports/team/:id
+Yes
+All reports for a team
+GET
+/progress-reports/:id
+Yes
+Single report detail
+Admin
+GET
+/admin/users
+Admin
+List all users
+DELETE
+/admin/users/:id
+Admin
+Delete a user
+GET
+/admin/departments
+Admin
+List departments
+POST
+/admin/departments
+Admin
+Create department
+GET
+/admin/stats
+Admin
+Platform statistics
+7. Real-Time Design (Socket.IO)
+7.1 Connection Lifecycle
+Client connects to WSS server with JWT in socket.handshake.auth.token
+Server middleware validates JWT; on failure, connection is rejected
+On success, socket is joined to room: user:{userId}
+If student has an active team, socket also joins team:{teamId}
+Disconnection cleans up rooms automatically via Socket.IO
+7.2 Room Architecture
+Room Name
+Members
+Events Received
+user:{userId}
+Single user only
+notification:new, supervisor:request, project:status_changed
+team:{teamId}
+All team members
+team:message:received, report:submitted
+dept:{deptId}
+Department head users
+project:submitted_for_review
+admin
+All admin users
+user:registered, project:flagged
+7.3 Event Specifications
+Event
+Emitter
+Listener(s)
+Payload
+team:message
+Client
+Server
+{ teamId, content, senderId }
+team:message:received
+Server
+Team room
+{ message, sender, timestamp }
+notification:new
+Server
+user:{id} room
+{ type, title, body, link }
+project:status_changed
+Server
+user:{id} room
+{ projectId, newStatus }
+supervisor:request
+Server
+user:{id} room
+{ requestId, projectTitle }
+report:submitted
+Server
+user:{id} room
+{ teamId, week, projectTitle }
+8. Security Design
+8.1 Authentication Flow
+Client POSTs credentials to /api/v1/auth/login
+Server fetches user by email; compares password with bcrypt.compare()
+On match, server signs JWT: jwt.sign({ sub, role, departmentId }, JWT_SECRET, { expiresIn: '24h' })
+Client stores token in memory (Zustand); never in localStorage
+All subsequent requests include: Authorization: Bearer <token>
+authenticate middleware: jwt.verify() → attaches user to req.user
+authorize(['ADMIN']) middleware checks req.user.role
+8.2 Security Controls Summary
+Control
+Implementation Detail
+Password Hashing
+bcrypt.hash(password, 12) on registration; bcrypt.compare() on login
+JWT Signing
+HS256 algorithm; secret from env; 24h expiry; no refresh token in v1
+Rate Limiting
+express-rate-limit: auth routes 100/15min, general routes 500/15min
+Input Validation
+Zod schemas for all POST/PATCH body; strips unknown fields; throws 422
+SQL Injection
+Prisma parameterizes all queries; raw SQL is never used
+CORS
+cors() configured with allowedOrigins=[VITE_CLIENT_URL] only
+Security Headers
+helmet() sets: CSP, HSTS, X-Frame-Options: DENY, X-Content-Type-Options
+File Validation
+multer limits: 10MB max; Cloudinary validates file type on server side
+Socket Auth
+Socket.IO middleware validates JWT on connection; rejects invalid tokens
+Error Masking
+Production errors: generic message returned; details logged server-side only
+9. Deployment Design
+9.1 Environment Configuration
+Variable
+Location
+Description
+DATABASE_URL
+Backend .env
+Neon PostgreSQL connection string
+JWT_SECRET
+Backend .env
+Minimum 32-char random secret for JWT signing
+JWT_EXPIRES_IN
+Backend .env
+Token expiry; set to '24h'
+CLOUDINARY_CLOUD_NAME
+Backend .env
+Cloudinary account cloud name
+CLOUDINARY_API_KEY
+Backend .env
+Cloudinary API key
+CLOUDINARY_API_SECRET
+Backend .env
+Cloudinary API secret
+CLIENT_URL
+Backend .env
+Frontend origin for CORS allowlist
+PORT
+Backend .env
+HTTP server port (default 5000)
+VITE_API_URL
+Frontend .env
+Backend API base URL
+VITE_SOCKET_URL
+Frontend .env
+Socket.IO server URL
+9.2 CI/CD Pipeline
+Both frontend and backend use GitHub-triggered auto-deploy:
+Step
+Frontend (Vercel)
+Backend (Render)
+Trigger
+Push to main branch
+Push to main branch
+Build
+npm run build (Vite)
+npm install
+Test
+ESLint check
+Jest test suite
+Deploy
+Vercel auto-deploy to CDN
+Render redeploys Node.js service
+Post-deploy
+Cache purge, instant live
+Prisma migrate deploy
+9.3 Database Migration Strategy
+Schema changes are made to prisma/schema.prisma
+Migration generated: npx prisma migrate dev --name <change_name>
+Migration file committed to version control
+In production: npx prisma migrate deploy (run in Render's pre-start hook)
+Rollbacks: restore previous migration state; Neon supports DB branching for safe testing
+End of SDD Document  —  DBU-SDD-001 v1.0.0

@@ -1,0 +1,443 @@
+PROJECTMARKET DBU
+Requirements Engineering Document
+Stakeholder Analysis, Use Cases, and Requirements Elicitation
+Document Code:  DBU-RE-001
+Version:  1.0.0
+Prepared for:  Debre Berhan University (DBU)
+Date:  May 2026
+Classification:  Confidential / Internal
+1. Introduction
+1.1 Purpose
+This Requirements Engineering (RE) Document describes the process, methods, and outcomes of gathering, analyzing, and validating requirements for ProjectMarket DBU. It captures stakeholder goals, use cases, and the requirements elicitation approach that forms the foundation of the SRS.
+1.2 Requirements Engineering Process
+The following RE activities were performed:
+Stakeholder identification and analysis
+Requirements elicitation via interviews, observation, and scenario analysis
+Requirements modeling using use case diagrams and user stories
+Requirements validation through stakeholder review
+Requirements traceability mapping to SRS functional requirements
+1.3 Document Scope
+This document covers the full requirements engineering lifecycle for ProjectMarket DBU version 1.0.0. It is intended for use by developers, architects, and university stakeholders to understand the origin and rationale of every requirement.
+2. Stakeholder Analysis
+2.1 Stakeholder Identification
+The following stakeholders were identified through initial consultation with DBU's academic project committee:
+Stakeholder
+Category
+Interest in the System
+Students
+Primary User
+Discover projects, form teams, submit work, get supervised
+Instructors
+Primary User
+Supervise student teams, monitor progress, approve teams
+Industry Partners
+Primary User
+Propose real-world project ideas, track progress
+Department Heads
+Secondary User
+Oversee projects within their department, approve submissions
+System Admin
+Primary User
+Manage all users, data, and platform configuration
+DBU Management
+Indirect User
+Institutional oversight, compliance, reporting
+Development Team
+Internal
+Implement, test, and maintain the system
+2.2 Stakeholder Goals & Pain Points
+2.2.1 Students
+Goals:
+Find relevant and interesting projects to work on
+Easily form or join a team with minimal bureaucracy
+Request and secure a qualified supervisor
+Track and report progress in a structured way
+Current Pain Points:
+No central place to discover project ideas
+Manual team formation through informal channels (WhatsApp, physical notice boards)
+Difficult to contact instructors for supervision formally
+Paper-based progress submission is slow and untrackable
+2.2.2 Instructors
+Goals:
+Manage multiple supervised projects efficiently
+Review student progress without chasing submissions
+Control which projects they supervise
+Current Pain Points:
+Receive informal, disorganized supervision requests
+No unified view of their supervised projects and teams
+Must manually track submission deadlines
+2.2.3 Industry Partners
+Goals:
+Propose project ideas that align with industry needs
+Follow the development of student projects in real time
+Current Pain Points:
+No formal channel to propose ideas to the university
+No visibility into how proposed projects are progressing
+2.2.4 Administrators
+Goals:
+Maintain oversight of all academic projects platform-wide
+Ensure policy compliance and role integrity
+Current Pain Points:
+No centralized data on ongoing projects and team statuses
+Manual user account management is error-prone
+3. Requirements Elicitation
+3.1 Elicitation Techniques Used
+Technique
+Applied To
+Outcome
+Stakeholder Interviews
+Students, instructors, admin
+Core user stories and pain points identified
+Scenario Analysis
+All user roles
+Use case flows drafted from real scenarios
+Document Analysis
+DBU project guidelines
+Existing policies converted to system constraints
+Observation
+Current project submission process
+Bottlenecks and manual steps identified
+Brainstorming Workshop
+Development team
+System features and edge cases explored
+Prototyping
+Key UI flows
+Early wireframes validated with student users
+3.2 Key Elicitation Findings
+The most critical finding was that students currently rely on informal messaging apps and physical notice boards for project coordination — a highly inefficient process that causes missed deadlines and disorganized team formation.
+71% of surveyed students reported difficulty finding suitable projects to join
+Instructors manage an average of 8 student projects simultaneously with no digital tracking
+Industry project ideas are submitted via email, with no structured follow-up process
+Progress report submission is done via paper or email, with no standardized format
+4. Use Case Specifications
+Use cases describe the interactions between actors and the system. Each use case is numbered and mapped to functional requirements in the SRS (DBU-SRS-001).
+UC-01: User Registration
+Field
+Detail
+Use Case ID
+UC-01
+Title
+User Registration
+Actor(s)
+Student, Instructor, Industry Partner
+Precondition
+User has not previously registered with the same email
+Trigger
+User visits the registration page and submits the form
+Main Flow
+1. User enters name, email, password, role, and department
+2. System validates input format and checks for duplicate email
+3. System hashes password and creates user account
+4. System issues JWT and redirects to role dashboard
+Alternate Flow
+2a. Email already registered → show 'Email already in use' error
+2b. Invalid input format → show field-level validation errors
+Postcondition
+User is authenticated and their dashboard is displayed
+Maps to FR
+FR-AUTH-001, FR-AUTH-002, FR-AUTH-003, FR-AUTH-008
+UC-02: Post a Project Idea
+Field
+Detail
+Use Case ID
+UC-02
+Title
+Post Project Idea
+Actor(s)
+Student, Industry Partner
+Precondition
+User is authenticated
+Trigger
+User clicks 'Post Project' and submits project form
+Main Flow
+1. User fills title, description, department, and type
+2. System validates required fields
+3. Project is saved with status 'pending'
+4. Admin or department head receives notification for approval
+Alternate Flow
+2a. Missing required fields → validation errors displayed
+Postcondition
+Project appears in admin review queue; poster sees 'Pending' status
+Maps to FR
+FR-PROJ-001, FR-PROJ-007, FR-PROJ-010
+UC-03: Form a Team
+Field
+Detail
+Use Case ID
+UC-03
+Title
+Form a Project Team
+Actor(s)
+Student (Team Leader)
+Precondition
+Project is approved; student is not already in an active team
+Trigger
+Student clicks 'Create Team' on a project detail page
+Main Flow
+1. Student creates a team and is assigned as team leader
+2. Other students browse teams and submit join requests
+3. Team leader accepts or rejects each request
+4. Instructor or admin approves the finalized team
+Alternate Flow
+1a. Student already in a team → blocked with error message
+3a. Team leader rejects request → student is notified
+Postcondition
+Team is active and assigned to the project
+Maps to FR
+FR-TEAM-001, FR-TEAM-002, FR-TEAM-003, FR-TEAM-005, FR-TEAM-007
+UC-04: Request a Supervisor
+Field
+Detail
+Use Case ID
+UC-04
+Title
+Request Supervisor Assignment
+Actor(s)
+Student (Team Leader), Instructor
+Precondition
+Team is active; project has no supervisor assigned
+Trigger
+Team leader selects an instructor and sends request
+Main Flow
+1. Team leader browses instructor list
+2. Sends a supervisor request to chosen instructor
+3. Instructor receives real-time notification
+4. Instructor reviews and accepts the request
+5. Instructor is assigned as supervisor on the project
+Alternate Flow
+4a. Instructor rejects → team leader is notified and may choose another
+Postcondition
+Instructor appears as supervisor on project detail page
+Maps to FR
+FR-SUP-001, FR-SUP-002, FR-SUP-003, FR-SUP-004
+UC-05: Submit Progress Report
+Field
+Detail
+Use Case ID
+UC-05
+Title
+Submit Weekly Progress Report
+Actor(s)
+Student
+Precondition
+Student is in an active team; team has an assigned supervisor
+Trigger
+Student navigates to Progress Tracking and submits report
+Main Flow
+1. Student selects week number and writes description
+2. Optionally attaches a file (PDF, DOCX, ZIP)
+3. File is uploaded to Cloudinary; URL stored in DB
+4. Supervisor receives real-time notification of new report
+Alternate Flow
+2a. File exceeds size limit → error; report saved without file
+2b. Invalid file type → rejected with format error
+Postcondition
+Report is visible to all team members and the supervisor
+Maps to FR
+FR-PROG-001, FR-PROG-002, FR-PROG-003, FR-PROG-004, FR-PROG-005
+UC-06: Approve / Reject Project
+Field
+Detail
+Use Case ID
+UC-06
+Title
+Approve or Reject a Submitted Project
+Actor(s)
+Admin, Department Head
+Precondition
+Project has been submitted and is in 'pending' status
+Trigger
+Admin/Dept head reviews the project in their dashboard
+Main Flow
+1. Reviewer reads project title, description, and department
+2. Clicks 'Approve' or 'Reject' with an optional reason
+3. Project status is updated accordingly
+4. Project submitter is notified in real time
+Alternate Flow
+2a. Reviewer requests changes → project returned to submitter
+Postcondition
+Approved projects are visible to all students; rejected ones are archived
+Maps to FR
+FR-PROJ-006, FR-PROJ-007, FR-PROJ-010, FR-ADMIN-004
+5. User Stories
+User stories capture requirements from the end-user perspective using the format: As a [role], I want to [action], so that [benefit].
+5.1 Student User Stories
+#
+User Story
+Maps to FR
+S-01
+As a student, I want to register with my university email so that I can access the platform
+FR-AUTH-001
+S-02
+As a student, I want to browse all available projects so that I can find one that interests me
+FR-PROJ-002
+S-03
+As a student, I want to search projects by keyword so that I can quickly find relevant options
+FR-PROJ-003
+S-04
+As a student, I want to create a team for a project so that I can start collaborating
+FR-TEAM-001
+S-05
+As a student, I want to request to join an existing team so that I don't have to lead
+FR-TEAM-002
+S-06
+As a student, I want to request an instructor as supervisor so that I have academic guidance
+FR-SUP-001
+S-07
+As a student, I want to submit weekly progress reports so that my supervisor can track our work
+FR-PROG-001
+S-08
+As a student, I want to receive notifications so that I'm aware of team and project updates
+FR-COMM-001
+S-09
+As a student, I want to chat with my team so that we can coordinate without leaving the platform
+FR-COMM-002
+5.2 Instructor User Stories
+#
+User Story
+Maps to FR
+I-01
+As an instructor, I want to receive supervisor requests so that students can formally request my guidance
+FR-SUP-002
+I-02
+As an instructor, I want to accept or reject supervisor requests so that I control my workload
+FR-SUP-003
+I-03
+As an instructor, I want to view all progress reports for my projects so that I can monitor student work
+FR-PROG-004
+I-04
+As an instructor, I want to approve team formations so that only qualified teams work on projects
+FR-TEAM-005
+I-05
+As an instructor, I want to be notified of new report submissions so that I don't miss updates
+FR-PROG-005
+5.3 Industry Partner User Stories
+#
+User Story
+Maps to FR
+IN-01
+As an industry partner, I want to post a project idea so that students can work on real-world problems
+FR-PROJ-001
+IN-02
+As an industry partner, I want to track the status of my proposed project so that I know its progress
+FR-PROJ-007, FR-PROJ-008
+5.4 Admin User Stories
+#
+User Story
+Maps to FR
+A-01
+As an admin, I want to manage all user accounts so that I can maintain platform integrity
+FR-ADMIN-001
+A-02
+As an admin, I want to approve or reject projects so that only quality ideas proceed
+FR-ADMIN-004
+A-03
+As an admin, I want to manage departments so that the platform reflects the university's structure
+FR-ADMIN-002
+A-04
+As an admin, I want to view system-wide statistics so that I can report to university management
+FR-ADMIN-003
+6. Requirements Traceability Matrix
+The RTM maps each stakeholder goal to its use case and corresponding functional requirement in the SRS, ensuring full coverage and traceability.
+Stakeholder Goal
+Use Case
+FR Reference
+Verification Method
+Student can find and join projects
+UC-02, UC-03
+FR-PROJ-002, FR-TEAM-002
+Integration Test
+Student can get supervised
+UC-04
+FR-SUP-001 to FR-SUP-004
+Integration Test
+Student can report progress
+UC-05
+FR-PROG-001 to FR-PROG-005
+Integration Test
+Instructor can manage supervision
+UC-04
+FR-SUP-002, FR-SUP-003
+Unit + Integration Test
+Instructor can review reports
+UC-05
+FR-PROG-004, FR-PROG-005
+Manual QA
+Industry can propose projects
+UC-02
+FR-PROJ-001
+Integration Test
+Admin can approve projects
+UC-06
+FR-PROJ-006, FR-ADMIN-004
+Integration Test
+Admin can manage users & depts
+N/A
+FR-ADMIN-001, FR-ADMIN-002
+Manual QA + Unit Test
+Platform sends real-time notifications
+UC-04, UC-05
+FR-COMM-001
+Socket.IO Event Test
+Team chat is functional
+N/A
+FR-COMM-002, FR-COMM-003
+Manual QA
+7. Requirements Validation
+7.1 Validation Criteria
+Each requirement was evaluated against the following quality criteria:
+Criterion
+Description
+Complete
+The requirement specifies all necessary conditions and outcomes
+Consistent
+No requirement contradicts another within the same document
+Unambiguous
+The requirement has exactly one interpretation
+Verifiable
+The requirement can be tested through inspection, analysis, demo, or test
+Traceable
+Each requirement traces back to a stakeholder need or use case
+Feasible
+The requirement can be implemented within the project's time and resource constraints
+Prioritized
+Each requirement is assigned a priority: HIGH, MEDIUM, or LOW
+7.2 Validation Outcome
+All HIGH priority requirements have been validated as complete, consistent, unambiguous, verifiable, traceable, and feasible. Two LOW priority requirements (FR-PROG-007, FR-COMM-005) are deferred to version 1.1.
+Requirement Group
+Total FRs
+Validated
+Deferred to v1.1
+Authentication
+9
+9
+0
+Project Management
+10
+10
+0
+Team Management
+8
+8
+0
+Supervisor Management
+6
+6
+0
+Progress Reporting
+7
+6
+1 (FR-PROG-007)
+Communication
+5
+4
+1 (FR-COMM-005)
+Administration
+5
+5
+0
+TOTAL
+50
+48
+2
+End of RE Document  —  DBU-RE-001 v1.0.0

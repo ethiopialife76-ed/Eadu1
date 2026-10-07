@@ -1,0 +1,496 @@
+PROJECTMARKET DBU
+Software Requirements Specification
+Functional and Non-Functional Requirements for ProjectMarket DBU
+Document Code:  DBU-SRS-001
+Version:  1.0.0
+Prepared for:  Debre Berhan University (DBU)
+Date:  May 2026
+Classification:  Confidential / Internal
+1. Introduction
+1.1 Purpose
+This Software Requirements Specification (SRS) defines the complete set of requirements for ProjectMarket DBU — a web-based academic project management platform for Debre Berhan University. It serves as the primary reference for developers, testers, stakeholders, and university administrators involved in the system's design, implementation, and evaluation.
+1.2 Scope
+ProjectMarket DBU covers the following functional scope:
+User registration, authentication, and role management
+Project idea submission, browsing, and lifecycle management
+Student team formation, membership, and approval workflows
+Supervisor (instructor) selection and assignment
+Weekly progress reporting with file attachments
+Real-time notifications and team communication (chat)
+Role-specific dashboards for students, instructors, departments, and admins
+Out of scope for this version:
+Video conferencing or external meeting integration
+Automated grading or academic scoring
+Integration with external LMS platforms (e.g. Moodle)
+1.3 Definitions, Acronyms & Abbreviations
+Term / Acronym
+Definition
+SRS
+Software Requirements Specification — this document
+DBU
+Debre Berhan University
+FR
+Functional Requirement
+NFR
+Non-Functional Requirement
+UC
+Use Case
+RBAC
+Role-Based Access Control
+JWT
+JSON Web Token — used for stateless authentication
+API
+Application Programming Interface
+UI
+User Interface
+Admin
+System Administrator with full platform privileges
+Supervisor
+An instructor who formally oversees a student project
+Team Leader
+The student who creates and manages a project team
+1.4 References
+ProjectMarket DBU System Design Document (DBU-SDD-001)
+ProjectMarket DBU Requirements Engineering Document (DBU-RE-001)
+IEEE Std 830-1998: Recommended Practice for SRS
+Debre Berhan University Academic Project Guidelines, 2024
+1.5 Document Overview
+Section 2 describes the overall system context. Section 3 lists all functional requirements grouped by feature. Section 4 covers non-functional requirements. Section 5 presents system constraints. Section 6 lists assumptions and dependencies.
+2. Overall System Description
+2.1 Product Perspective
+ProjectMarket DBU is a standalone web application with no dependency on existing DBU software systems. It will be accessible via modern web browsers on desktop and mobile devices. The system interfaces with three external services:
+Cloudinary — for file and document storage
+Email Service (SMTP) — for notifications and password resets
+PostgreSQL (Neon) — hosted relational database
+2.2 Product Functions
+The platform delivers the following high-level functions:
+Function
+Summary
+Identity Management
+Register, authenticate, and manage users with distinct roles
+Project Marketplace
+Post, browse, filter, and manage academic project ideas
+Team Management
+Form teams, manage membership, and handle approvals
+Supervisor Assignment
+Request, accept, and manage supervisor relationships
+Progress Tracking
+Submit and review weekly reports with file attachments
+Communication
+Real-time chat and system notifications
+Administration
+Manage users, departments, and platform-wide settings
+2.3 User Classes and Characteristics
+User Class
+Technical Level
+Primary Goal
+Student
+Beginner–Intermediate
+Find projects, form teams, submit reports, get supervised
+Instructor
+Intermediate
+Supervise students, review reports, approve teams
+Industry
+Beginner
+Propose project ideas, monitor project progress
+Department
+Intermediate
+Oversee departmental projects, approve submissions
+Admin
+Advanced
+Manage all users, projects, departments, system health
+2.4 Operating Environment
+Web Browsers: Chrome 100+, Firefox 100+, Edge 100+, Safari 15+
+Frontend: React 18+ served via Vercel CDN
+Backend: Node.js 18+ on Render (Linux container)
+Database: PostgreSQL 15 on Neon serverless
+Network: Requires stable internet (minimum 1 Mbps for file uploads)
+2.5 Design and Implementation Constraints
+Must use REST API architecture (no GraphQL in v1)
+All data must be stored in PostgreSQL — no NoSQL databases
+JWT tokens must not exceed 24-hour validity
+File uploads must be routed through Cloudinary — no local disk storage
+All API communication must occur over HTTPS
+3. Functional Requirements
+Each requirement is identified by a unique code: FR-AUTH-001, FR-PROJ-001, etc. Priority levels: HIGH (must have), MEDIUM (should have), LOW (nice to have).
+3.1 Authentication & User Management
+ID
+Requirement
+Priority
+Role
+FR-AUTH-001
+The system shall allow users to register with name, email, password, role, and department
+HIGH
+All
+FR-AUTH-002
+The system shall authenticate users via email and password
+HIGH
+All
+FR-AUTH-003
+The system shall issue a signed JWT upon successful login
+HIGH
+All
+FR-AUTH-004
+The system shall reject expired or tampered JWT tokens
+HIGH
+All
+FR-AUTH-005
+The system shall allow users to update their profile information
+MEDIUM
+All
+FR-AUTH-006
+The system shall allow users to change their password
+MEDIUM
+All
+FR-AUTH-007
+The system shall support password reset via email link
+MEDIUM
+All
+FR-AUTH-008
+The system shall prevent duplicate registrations with the same email
+HIGH
+All
+FR-AUTH-009
+The admin shall be able to deactivate or delete user accounts
+HIGH
+Admin
+3.2 Project Management
+ID
+Requirement
+Priority
+Role
+FR-PROJ-001
+Students and industry users shall be able to post new project ideas
+HIGH
+Student / Industry
+FR-PROJ-002
+All authenticated users shall be able to browse the project listing
+HIGH
+All
+FR-PROJ-003
+Users shall be able to search projects by title, department, or keyword
+HIGH
+All
+FR-PROJ-004
+Users shall be able to filter projects by status, department, and type
+MEDIUM
+All
+FR-PROJ-005
+Project owners shall be able to edit their own project details
+HIGH
+Student / Industry
+FR-PROJ-006
+Admins and department heads shall be able to approve or reject projects
+HIGH
+Admin / Dept
+FR-PROJ-007
+The system shall track project status: open, pending, approved, completed
+HIGH
+System
+FR-PROJ-008
+The system shall display full project detail including team and supervisor
+HIGH
+All
+FR-PROJ-009
+Admins shall be able to delete any project
+HIGH
+Admin
+FR-PROJ-010
+The system shall notify the project owner when status changes
+MEDIUM
+System
+3.3 Team Management
+ID
+Requirement
+Priority
+Role
+FR-TEAM-001
+A student shall be able to create a team for an approved project
+HIGH
+Student
+FR-TEAM-002
+Students shall be able to request to join an existing team
+HIGH
+Student
+FR-TEAM-003
+The team leader shall be able to accept or reject join requests
+HIGH
+Student
+FR-TEAM-004
+Students shall be able to leave a team
+MEDIUM
+Student
+FR-TEAM-005
+An instructor or admin shall be able to approve a team's formation
+HIGH
+Instructor / Admin
+FR-TEAM-006
+The system shall display the full list of team members
+HIGH
+All
+FR-TEAM-007
+The system shall prevent a student from being in multiple active teams
+HIGH
+System
+FR-TEAM-008
+The team leader shall be able to remove a team member
+MEDIUM
+Student
+3.4 Supervisor Management
+ID
+Requirement
+Priority
+Role
+FR-SUP-001
+A student (team leader) shall be able to send a supervisor request to an instructor
+HIGH
+Student
+FR-SUP-002
+An instructor shall receive a notification of incoming supervisor requests
+HIGH
+Instructor
+FR-SUP-003
+An instructor shall be able to accept or reject a supervisor request
+HIGH
+Instructor
+FR-SUP-004
+On acceptance, the instructor shall be assigned as supervisor of the project
+HIGH
+System
+FR-SUP-005
+The system shall display the list of available instructors for supervisor selection
+MEDIUM
+Student
+FR-SUP-006
+An admin shall be able to manually assign a supervisor to any project
+MEDIUM
+Admin
+3.5 Progress Reporting
+ID
+Requirement
+Priority
+Role
+FR-PROG-001
+A student (team member) shall be able to submit a weekly progress report
+HIGH
+Student
+FR-PROG-002
+Progress reports shall include week number, description, and optional file
+HIGH
+Student
+FR-PROG-003
+Uploaded files shall be stored in Cloudinary and referenced by URL
+HIGH
+System
+FR-PROG-004
+Supervisors shall be able to view all progress reports for their projects
+HIGH
+Instructor
+FR-PROG-005
+The system shall notify the supervisor when a new report is submitted
+MEDIUM
+System
+FR-PROG-006
+Admins and supervisors shall be able to comment on progress reports
+MEDIUM
+Instructor / Admin
+FR-PROG-007
+Students shall be able to edit a submitted report within 24 hours
+LOW
+Student
+3.6 Communication & Notifications
+ID
+Requirement
+Priority
+Role
+FR-COMM-001
+The system shall deliver real-time in-app notifications via Socket.IO
+HIGH
+System
+FR-COMM-002
+Team members shall be able to send messages in a team chat room
+HIGH
+Student
+FR-COMM-003
+Chat messages shall be persisted and visible to all team members
+HIGH
+System
+FR-COMM-004
+Users shall see unread notification count in the navigation bar
+MEDIUM
+All
+FR-COMM-005
+Users shall be able to mark notifications as read
+MEDIUM
+All
+3.7 Administration
+ID
+Requirement
+Priority
+Role
+FR-ADMIN-001
+The admin shall be able to view and manage all registered users
+HIGH
+Admin
+FR-ADMIN-002
+The admin shall be able to create and manage departments
+HIGH
+Admin
+FR-ADMIN-003
+The admin shall be able to view platform-wide statistics and usage metrics
+MEDIUM
+Admin
+FR-ADMIN-004
+The admin shall be able to approve or reject projects from any department
+HIGH
+Admin
+FR-ADMIN-005
+The admin shall be able to assign roles to users
+HIGH
+Admin
+4. Non-Functional Requirements
+4.1 Performance
+ID
+Requirement
+Metric
+NFR-PERF-001
+API responses for list endpoints shall return within acceptable time
+< 500ms at 95th percentile
+NFR-PERF-002
+File upload processing shall complete within reasonable time
+< 5 seconds for files up to 10MB
+NFR-PERF-003
+Real-time notifications shall be delivered promptly
+< 1 second after event trigger
+NFR-PERF-004
+The system shall support concurrent active users
+Minimum 200 concurrent users
+NFR-PERF-005
+Frontend initial page load shall be fast
+< 3 seconds on 4G connection
+4.2 Security
+ID
+Requirement
+Priority
+NFR-SEC-001
+All passwords shall be hashed using bcrypt with minimum 10 salt rounds
+HIGH
+NFR-SEC-002
+All API communication shall occur over HTTPS/TLS
+HIGH
+NFR-SEC-003
+JWT tokens shall expire within 24 hours
+HIGH
+NFR-SEC-004
+Authentication routes shall be rate-limited to prevent brute-force attacks
+HIGH
+NFR-SEC-005
+All user inputs shall be validated and sanitized server-side
+HIGH
+NFR-SEC-006
+The system shall implement CORS to restrict API access to approved origins
+HIGH
+NFR-SEC-007
+SQL injection shall be prevented via Prisma's parameterized queries
+HIGH
+NFR-SEC-008
+HTTP security headers shall be set using helmet.js
+MEDIUM
+4.3 Usability
+ID
+Requirement
+NFR-USE-001
+The system shall provide clear error messages for all failed operations
+NFR-USE-002
+The UI shall be responsive and usable on mobile, tablet, and desktop screens
+NFR-USE-003
+Role-specific dashboards shall display only relevant information per user type
+NFR-USE-004
+The system shall provide loading indicators for all async operations
+NFR-USE-005
+New users shall be able to complete registration in under 3 minutes
+4.4 Reliability & Availability
+ID
+Requirement
+Target
+NFR-REL-001
+The system shall maintain high uptime
+99% monthly uptime SLA
+NFR-REL-002
+The system shall handle unexpected errors gracefully
+Global error handler, no raw stack traces exposed
+NFR-REL-003
+The database shall be backed up regularly
+Daily automated backups via Neon
+NFR-REL-004
+Failed file uploads shall not corrupt the database state
+Transactional rollback on upload failure
+4.5 Maintainability
+ID
+Requirement
+NFR-MAINT-001
+The codebase shall follow a layered architecture (controllers, services, repositories)
+NFR-MAINT-002
+All environment-specific configuration shall be stored in .env files
+NFR-MAINT-003
+API endpoints shall be versioned (/api/v1/) to allow future upgrades
+NFR-MAINT-004
+Database schema changes shall be managed via Prisma migrations
+NFR-MAINT-005
+Code shall include inline comments for all non-trivial business logic
+4.6 Scalability
+ID
+Requirement
+NFR-SCALE-001
+The backend shall be stateless to support horizontal scaling
+NFR-SCALE-002
+The database connection shall use pooling to handle concurrent requests
+NFR-SCALE-003
+Static assets shall be served from a CDN to reduce server load
+5. System Constraints
+5.1 Technical Constraints
+The system must be built using the approved tech stack: React, Node.js/Express, PostgreSQL, Prisma, Socket.IO
+Deployment is restricted to Vercel (frontend), Render (backend), and Neon (database)
+File storage must use Cloudinary; no local disk storage is permitted in production
+The system must function without requiring browser plugins or extensions
+5.2 Business Constraints
+The platform must be usable without any paid subscriptions for core academic use
+Industry partners must be approved by an admin before accessing the platform
+Student data must comply with DBU's data privacy policy
+5.3 Regulatory Constraints
+User data must be handled in compliance with applicable data protection laws
+Passwords must never be stored in plaintext
+Audit logs of admin actions must be retained for a minimum of 90 days
+6. Assumptions and Dependencies
+6.1 Assumptions
+All DBU students have a valid university email address for registration
+Users have access to a modern web browser and stable internet connection
+Instructors voluntarily participate in the supervisor selection process
+Industry partners are pre-vetted and approved by DBU administration
+Students are responsible for forming their own teams; the system facilitates, not mandates
+6.2 Dependencies
+Dependency
+Type
+Risk if Unavailable
+Cloudinary
+External Service (File Storage)
+File uploads will fail; progress reports incomplete
+Neon PostgreSQL
+External Service (Database)
+Complete system outage; no data operations possible
+Render
+External Service (Backend Host)
+API unavailable; all operations fail
+Vercel
+External Service (Frontend Host)
+UI inaccessible; no user interactions possible
+Socket.IO
+NPM Library (Real-time)
+Notifications and chat disabled; degraded experience
+Prisma
+NPM Library (ORM)
+All database operations fail
+bcrypt
+NPM Library (Security)
+User registration and login unavailable
+End of SRS Document  —  DBU-SRS-001 v1.0.0
