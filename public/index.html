@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>2KT Chating | Cross-Platform Messenger & Material Sharing</title>
+  
+  <!-- Progressive Web App (PWA) & Cross-Platform Support -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="2KT Chating">
+  
+  <!-- iOS Safari Web App Settings -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="2KT Chat">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  
+  <!-- Favicons and Vector Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon.png">
+  <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- Real-time Network / Offline Status Banner -->
+  <div id="networkBanner" class="network-status-banner hidden"></div>
+
+  <!-- ================= AUTH OVERLAY ================= -->
+  <div id="authContainer" class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">
+          <img src="/icons/icon.svg" alt="2KT Chating Logo" width="40" height="40" style="border-radius: 10px;">
+        </div>
+        <h1 class="auth-title">2KT Chating</h1>
+        <p class="auth-subtitle">Platform-independent messenger & material sharing</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button id="tabLogin" class="auth-tab active" type="button">Sign In</button>
+        <button id="tabRegister" class="auth-tab" type="button">Create Account</button>
+      </div>
+
+      <div id="authError" class="form-error hidden"></div>
+
+      <!-- Login Form -->
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label" for="loginUsername">Username</label>
+          <input type="text" id="loginUsername" class="form-input" placeholder="Enter your username" autocomplete="username" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top: 20px;">
+          <span>Sign In to Chat</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="registerForm" class="hidden">
+        <div class="form-group">
+          <label class="form-label" for="regDisplayName">Full / Nickname</label>
+          <input type="text" id="regDisplayName" class="form-input" placeholder="e.g. Alex Rivera" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="regUsername">Username (unique ID)</label>
+          <input type="text" id="regUsername" class="form-input" placeholder="e.g. alex26" autocomplete="username" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="regPassword">Password</label>
+          <input type="password" id="regPassword" class="form-input" placeholder="At least 4 characters" autocomplete="new-password" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pick Profile Avatar Color</label>
+          <div class="avatar-selector" id="avatarColorPicker">
+            <div class="avatar-choice selected" style="background:#3b82f6" data-color="3b82f6">A</div>
+            <div class="avatar-choice" style="background:#8b5cf6" data-color="8b5cf6">B</div>
+            <div class="avatar-choice" style="background:#ec4899" data-color="ec4899">C</div>
+            <div class="avatar-choice" style="background:#f43f5e" data-color="f43f5e">D</div>
+            <div class="avatar-choice" style="background:#f97316" data-color="f97316">E</div>
+            <div class="avatar-choice" style="background:#10b981" data-color="10b981">F</div>
+            <div class="avatar-choice" style="background:#06b6d4" data-color="06b6d4">G</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="regBio">Bio / Status</label>
+          <input type="text" id="regBio" class="form-input" placeholder="Available to chat & share files" value="Available to chat & share files">
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top: 20px;">
+          <span>Create My Account</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+        </button>
+      </form>
+
+      <!-- PWA Install Banner & Server Config on Auth Screen -->
+      <div class="auth-install-box" style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
+        <button type="button" class="btn-install-app btn-install-pill" title="Install App on this Device">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span>📲 Install App on this Device</span>
+        </button>
+        <button type="button" class="btn-server-config" id="btnAuthServerConfig" style="background:none; border:none; color:var(--text-muted); font-size:12.5px; cursor:pointer; display:flex; align-items:center; gap:6px; padding:4px 8px; border-radius:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+          <span>Cloud / Server Connection</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN APP ================= -->
+  <div id="appContainer" class="app-container hidden">
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <!-- Sidebar Header -->
+      <div class="sidebar-header">
+        <div class="user-profile-summary" id="currentUserProfileBtn" title="Click to edit profile">
+          <div class="avatar-wrapper">
+            <div class="avatar-img" id="myAvatar">U</div>
+            <span class="online-indicator" id="myOnlineDot"></span>
+          </div>
+          <div class="user-meta">
+            <div class="user-meta-name" id="myDisplayName">User</div>
+            <div class="user-meta-status" id="myUsername">@username</div>
+          </div>
+        </div>
+
+        <div class="sidebar-actions">
+          <!-- Install App Button (Android/iOS/PC/Mac) -->
+          <button class="icon-btn btn-install-app install-glow-btn" id="btnInstallApp" title="Install 2KT Chat App on this device">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          </button>
+          <!-- Share App (Native Device Share sheet) -->
+          <button class="icon-btn" id="btnShareApp" title="Share 2KT Chat with Friends">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+          </button>
+          <!-- Invite / Connect with Friends Button (QR / LAN) -->
+          <button class="icon-btn" id="btnInviteFriends" title="Connect with Friends (QR / Link)">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          </button>
+          <!-- New Direct Chat / Search Users -->
+          <button class="icon-btn" id="btnNewChat" title="New Message">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+          </button>
+          <!-- New Group Chat -->
+          <button class="icon-btn" id="btnNewGroup" title="New Group Chat">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          </button>
+          <!-- Dark / Light theme toggle -->
+          <button class="icon-btn" id="btnThemeToggle" title="Toggle Dark/Light Mode">
+            <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          </button>
+          <!-- Cloud / Server Gateway Settings -->
+          <button class="icon-btn btn-server-config" id="btnServerConfig" title="Server Gateway & Cloud Settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+          </button>
+          <!-- Logout -->
+          <button class="icon-btn" id="btnLogout" title="Logout">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search Input -->
+      <div class="sidebar-search-container">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="chatSearchInput" class="search-input" placeholder="Search chats or friends...">
+        </div>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="sidebar-tabs">
+        <button class="sidebar-tab active" data-filter="all">All</button>
+        <button class="sidebar-tab" data-filter="direct">Direct</button>
+        <button class="sidebar-tab" data-filter="group">Groups</button>
+      </div>
+
+      <!-- Conversations List -->
+      <div class="chat-list" id="chatList">
+        <!-- Rendered dynamically -->
+      </div>
+    </aside>
+
+    <!-- CENTER CHAT AREA -->
+    <main class="chat-main" id="chatMain">
+
+      <!-- Drag & Drop overlay -->
+      <div class="drag-overlay" id="dragOverlay">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+        <h3 style="margin-top: 14px; font-size: 20px;">Drop materials here to send</h3>
+        <p style="opacity: 0.8; font-size: 14px; margin-top: 4px;">Images, documents, code files, or audio</p>
+      </div>
+
+      <!-- Welcome State (When no chat is active) -->
+      <div class="chat-welcome" id="chatWelcome">
+        <div class="chat-welcome-icon">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+        </div>
+        <h2 class="chat-welcome-title">Welcome to 2KT Chating</h2>
+        <p class="chat-welcome-desc">
+          Chat seamlessly with your friends at any time. Share photos, documents, spreadsheets, code files, and voice notes instantly in real time.
+        </p>
+        <div class="welcome-actions">
+          <button class="btn-secondary" id="welcomeStartChatBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+            <span>Start a New Chat</span>
+          </button>
+          <button class="btn-secondary" id="welcomeInviteBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            <span>Invite Friends (Share Link/QR)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Active Chat Window -->
+      <div class="chat-active-view hidden" id="chatActiveView">
+        <!-- Header -->
+        <header class="chat-header">
+          <div class="chat-header-left" id="activeChatHeaderInfo">
+            <button class="back-btn" id="btnBackToSidebar" title="Back to chats">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </button>
+            <div class="avatar-wrapper">
+              <div class="avatar-img" id="activeChatAvatar">C</div>
+              <span class="online-indicator" id="activeChatOnlineDot"></span>
+            </div>
+            <div class="chat-header-info">
+              <div class="chat-header-name" id="activeChatTitle">Chat Name</div>
+              <div class="chat-header-sub" id="activeChatSubtitle">online</div>
+            </div>
+          </div>
+
+          <div class="chat-header-actions">
+            <!-- Shared Media Gallery button -->
+            <button class="icon-btn" id="btnToggleMediaDrawer" title="Shared Media & Materials">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            </button>
+            <!-- Chat Info / Settings -->
+            <button class="icon-btn" id="btnChatInfo" title="Chat Info">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Message Stream -->
+        <div class="messages-container" id="messagesContainer">
+          <!-- Dynamically populated with message bubbles -->
+        </div>
+
+        <!-- Footer / Input -->
+        <footer class="chat-footer">
+          <!-- Reply Banner -->
+          <div class="reply-banner hidden" id="replyBanner">
+            <div class="reply-banner-content">
+              <span class="reply-banner-sender" id="replySenderName">Replying to...</span>
+              <span class="reply-banner-text" id="replySnippet">Message preview</span>
+            </div>
+            <button class="reply-banner-close" id="btnCloseReply" title="Cancel reply">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+
+          <!-- Voice Recording Bar -->
+          <div class="voice-recorder-bar hidden" id="voiceRecorderBar">
+            <div class="recording-pulse-dot"></div>
+            <div class="recording-time" id="recordingTimer">00:00</div>
+            <button class="voice-cancel-btn" id="btnCancelVoiceRecord">Cancel</button>
+            <button class="voice-send-btn" id="btnSendVoiceRecord">Send Audio</button>
+          </div>
+
+          <!-- Attachment Menu Popover -->
+          <div class="attachment-menu hidden" id="attachmentMenu">
+            <button class="attachment-item" id="btnAttachImage">
+              <div class="attach-icon" style="background:#3b82f6;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              </div>
+              <span>Photos & Videos</span>
+            </button>
+            <button class="attachment-item" id="btnAttachDoc">
+              <div class="attach-icon" style="background:#8b5cf6;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              </div>
+              <span>Document / File</span>
+            </button>
+            <button class="attachment-item" id="btnAttachAudio">
+              <div class="attach-icon" style="background:#10b981;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+              </div>
+              <span>Audio File</span>
+            </button>
+          </div>
+
+          <!-- Hidden File Inputs -->
+          <input type="file" id="fileInputImage" accept="image/*,video/*" class="hidden">
+          <input type="file" id="fileInputDoc" accept="*/*" class="hidden">
+          <input type="file" id="fileInputAudio" accept="audio/*" class="hidden">
+
+          <!-- Emoji Picker Popover -->
+          <div class="emoji-picker-container hidden" id="emojiPicker">
+            <!-- Dynamically populated or standard emojis -->
+          </div>
+
+          <!-- Main Input Row -->
+          <div class="input-row">
+            <div class="input-actions-left">
+              <!-- Attachment trigger -->
+              <button class="icon-btn" id="btnToggleAttachment" title="Share Material (Images, Documents, Files)">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+              </button>
+              <!-- Emoji trigger -->
+              <button class="icon-btn" id="btnToggleEmoji" title="Insert Emoji">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+              </button>
+            </div>
+
+            <!-- Message Textarea -->
+            <textarea id="messageInput" class="message-textarea" rows="1" placeholder="Write a message to your friend..."></textarea>
+
+            <!-- Voice Record / Send Button -->
+            <button class="icon-btn" id="btnVoiceRecord" title="Record Voice Note">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+            </button>
+            <button class="send-btn hidden" id="btnSendMessage" title="Send Message">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+          </div>
+        </footer>
+      </div>
+    </main>
+
+    <!-- RIGHT DRAWER (SHARED MEDIA & DETAILS) -->
+    <aside class="right-drawer collapsed" id="rightDrawer">
+      <div class="drawer-header">
+        <h3 class="drawer-title">Chat Info</h3>
+        <button class="icon-btn" id="btnCloseDrawer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="drawer-body">
+        <div class="drawer-profile-center">
+          <div class="avatar-img drawer-avatar" id="drawerAvatar">C</div>
+          <div class="drawer-name" id="drawerName">Chat Name</div>
+          <div class="drawer-sub" id="drawerBio">Bio / Status</div>
+        </div>
+
+        <!-- Shared Photos & Videos -->
+        <div class="drawer-section">
+          <div class="drawer-section-title">Shared Photos & Videos</div>
+          <div class="media-gallery-grid" id="drawerMediaGrid">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Shared Documents -->
+        <div class="drawer-section">
+          <div class="drawer-section-title">Shared Documents & Files</div>
+          <div class="docs-list" id="drawerDocsList">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Group Members (if group chat) -->
+        <div class="drawer-section hidden" id="drawerGroupSection">
+          <div class="drawer-section-title">Members</div>
+          <div class="user-select-list" id="drawerMembersList">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- Modal: New Direct Chat / Search Users -->
+  <div class="modal-overlay hidden" id="modalNewChat">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Start a Chat with a Friend</h3>
+        <button class="icon-btn" id="btnCloseNewChatModal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="userSearchModalInput" class="search-input" placeholder="Search friends by name or username...">
+        </div>
+        <div class="user-select-list" id="modalUsersList">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Create New Group Chat -->
+  <div class="modal-overlay hidden" id="modalNewGroup">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Create Group Chat</h3>
+        <button class="icon-btn" id="btnCloseNewGroupModal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Group Name</label>
+          <input type="text" id="groupNameInput" class="form-input" placeholder="e.g. Best Friends, Project Team">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Select Friends to Add</label>
+          <div class="user-select-list" id="modalGroupMembersList">
+            <!-- Checkbox user list -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btnCancelNewGroup">Cancel</button>
+        <button class="btn-primary" id="btnSubmitNewGroup" style="width:auto; padding: 10px 24px;">Create Group</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Invite Friends / Connect (QR Code & LAN URL) -->
+  <div class="modal-overlay hidden" id="modalInvite">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Invite & Connect with Friends</h3>
+        <button class="icon-btn" id="btnCloseInviteModal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <p style="font-size: 14.5px; color: var(--text-secondary); margin-bottom: 16px;">
+          Anyone on your Wi-Fi / Local Network can open this link on their phone, tablet, or laptop to chat and exchange files with you:
+        </p>
+
+        <div style="background: var(--bg-input); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+          <input type="text" id="inviteUrlField" readonly class="form-input" style="background: transparent; border:none; padding:0; font-weight: 600; color: var(--accent);">
+          <button class="btn-secondary" id="btnCopyInviteUrl" style="padding: 6px 14px; font-size: 12.5px;">Copy</button>
+        </div>
+
+        <!-- QR Code Canvas -->
+        <div style="background: white; padding: 16px; border-radius: var(--radius-md); display: inline-block; box-shadow: var(--shadow-md); margin-bottom: 16px;">
+          <canvas id="qrCanvas" width="180" height="180"></canvas>
+        </div>
+        <p style="font-size: 12.5px; color: var(--text-muted);">Scan this QR Code with a phone camera to join immediately</p>
+
+        <div style="margin-top: 20px; padding: 12px; background: rgba(59, 130, 246, 0.08); border-radius: var(--radius-sm); border: 1px solid rgba(59, 130, 246, 0.2); text-align: left; font-size: 12.5px; color: var(--text-secondary);">
+          <strong>Want to chat over the wider Internet?</strong>
+          <p style="margin-top: 4px;">Run <code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px; color: var(--text-primary);">npx cloudflared tunnel --url http://localhost:3000</code> in your terminal to get a free, secure global public link.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Profile -->
+  <div class="modal-overlay hidden" id="modalProfile">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Your Profile</h3>
+        <button class="icon-btn" id="btnCloseProfileModal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Display Name</label>
+          <input type="text" id="editDisplayName" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bio / Status</label>
+          <input type="text" id="editBio" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Avatar Color</label>
+          <div class="avatar-selector" id="editAvatarColorPicker">
+            <div class="avatar-choice" style="background:#3b82f6" data-color="3b82f6">A</div>
+            <div class="avatar-choice" style="background:#8b5cf6" data-color="8b5cf6">B</div>
+            <div class="avatar-choice" style="background:#ec4899" data-color="ec4899">C</div>
+            <div class="avatar-choice" style="background:#f43f5e" data-color="f43f5e">D</div>
+            <div class="avatar-choice" style="background:#f97316" data-color="f97316">E</div>
+            <div class="avatar-choice" style="background:#10b981" data-color="10b981">F</div>
+            <div class="avatar-choice" style="background:#06b6d4" data-color="06b6d4">G</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btnCancelProfile">Cancel</button>
+        <button class="btn-primary" id="btnSaveProfile" style="width:auto; padding: 10px 24px;">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lightbox Fullscreen Media Viewer -->
+  <div class="lightbox-overlay hidden" id="lightboxModal">
+    <div class="lightbox-content">
+      <button class="lightbox-close" id="btnCloseLightbox">&times;</button>
+      <img id="lightboxImg" class="lightbox-img" src="" alt="Shared Photo">
+      <div class="lightbox-toolbar">
+        <a id="lightboxDownloadBtn" class="lightbox-btn" download href="" target="_blank">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span>Download Original</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Cross-Platform Install Guide (Android, iOS, Windows, Mac) -->
+  <div class="modal-overlay hidden" id="modalInstallGuide">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">📲 Install 2KT Chating App</h3>
+        <button class="icon-btn" id="btnCloseInstallGuide">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body" style="text-align: left; padding: 20px 24px;">
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px; background: rgba(59, 130, 246, 0.1); padding: 12px 16px; border-radius: var(--radius-md); border: 1px solid rgba(59, 130, 246, 0.25);">
+          <img src="/icons/icon.svg" width="46" height="46" style="border-radius: 12px;" alt="2KT Chating">
+          <div>
+            <div style="font-weight: 700; font-size: 16px; color: var(--text-primary);">2KT Chating App</div>
+            <div style="font-size: 13px; color: var(--text-secondary);">Works standalone on any phone, tablet or PC</div>
+          </div>
+        </div>
+
+        <!-- iOS Safari Instructions -->
+        <div id="iosInstallInstructions" class="install-guide-section hidden">
+          <h4 style="font-size: 14.5px; font-weight: 600; color: var(--accent); margin-bottom: 10px;">Installing on iPhone & iPad (iOS):</h4>
+          <ol style="margin-left: 20px; font-size: 13.5px; color: var(--text-secondary); line-height: 1.8;">
+            <li>In Safari, tap the <strong>Share</strong> button <span style="display: inline-block; vertical-align: middle;">⬆️</span> (at bottom or top of screen).</li>
+            <li>Scroll down and tap <strong>"Add to Home Screen"</strong> ➕.</li>
+            <li>Tap <strong>"Add"</strong> in the top-right corner.</li>
+            <li>2KT Chating will now open as a full-screen native app directly from your home screen!</li>
+          </ol>
+        </div>
+
+        <!-- Android & Desktop Instructions -->
+        <div id="desktopAndroidInstallInstructions" class="install-guide-section">
+          <h4 style="font-size: 14.5px; font-weight: 600; color: var(--accent); margin-bottom: 10px;">Installing on Android, Windows, Mac or Linux:</h4>
+          <ol style="margin-left: 20px; font-size: 13.5px; color: var(--text-secondary); line-height: 1.8;">
+            <li>Click or tap <strong>"Install App"</strong> in the browser prompt or header.</li>
+            <li>On Android Chrome: Tap the three dots (⋮) &rarr; tap <strong>"Install app"</strong> or <strong>"Add to Home Screen"</strong>.</li>
+            <li>On Chrome/Edge PC: Click the <strong>Install</strong> icon (computer with down arrow) on the right side of the address bar.</li>
+            <li>Enjoy zero browser bars, instant launch from your desktop or app drawer!</li>
+          </ol>
+        </div>
+
+        <div style="margin-top: 24px; text-align: center;">
+          <button type="button" class="btn-primary btn-install-app" style="padding: 11px 24px;">
+            <span>Try Direct Install Now</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Cloud & Server Connection Settings (Android, iOS, Windows, Mac, Web) -->
+  <div class="modal-overlay hidden" id="modalServerConfig">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">☁️ Server & Cloud Connection</h3>
+        <button class="icon-btn" id="btnCloseServerConfig">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body" style="text-align: left; padding: 20px 24px;">
+        <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.6;">
+          Configure which backend server this app connects to. Works across <strong>Android</strong>, <strong>iPhone</strong>, <strong>Windows</strong>, <strong>macOS</strong>, and <strong>Web</strong>.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="inputServerUrl">Backend Server Gateway Address</label>
+          <input type="url" id="inputServerUrl" class="form-input" placeholder="e.g. https://your-domain.com or http://192.168.1.5:3000">
+          <small style="font-size: 12px; color: var(--text-muted); display: block; margin-top: 6px;">
+            Leave blank to auto-detect from browser origin (ideal when visiting via Chrome/web).
+          </small>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap;">
+          <button type="button" class="btn-secondary" id="btnServerDetectLocal" style="font-size: 12.5px; padding: 7px 12px;">Auto / Web Origin</button>
+          <button type="button" class="btn-secondary" id="btnTestServerConnection" style="font-size: 12.5px; padding: 7px 12px;">⚡ Test Connection</button>
+        </div>
+
+        <div id="serverConnectionStatus" style="font-size: 13px; padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 20px; display: none;"></div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="btn-secondary" id="btnCancelServerConfig">Cancel</button>
+          <button type="button" class="btn-primary" id="btnSaveServerConfig">Save & Reconnect</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Client-side Scripts -->
+  <script src="/js/socket.io.min.js"></script>
+  <script>if (typeof io === 'undefined') { document.write('<script src="/socket.io/socket.io.js"><\\/script>'); }</script>
+  <script src="/js/utils.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/media.js"></script>
+  <script src="/js/chat.js"></script>
+  <script src="/js/socket.js"></script>
+  <script src="/js/pwa.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

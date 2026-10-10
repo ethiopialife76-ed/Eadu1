@@ -1,0 +1,16 @@
+{
+  "appId": "com.twokt.chating",
+  "appName": "2KT Chating",
+  "webDir": "public",
+  "bundledWebRuntime": false,
+  "server": {
+    "cleartext": true,
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#0f172a"
+    }
+  }
+}

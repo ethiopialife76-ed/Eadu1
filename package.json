@@ -1,0 +1,45 @@
+{
+  "name": "2kt-chating",
+  "version": "1.0.0",
+  "description": "Platform-independent cross-device chat and material sharing application",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "desktop": "npx electron electron-main.js",
+    "tunnel": "npx cloudflared tunnel --url http://localhost:3000",
+    "cap:sync": "cap sync",
+    "android:open": "cap open android",
+    "android:build": "cd android && gradlew.bat assembleDebug",
+    "android:release": "cd android && gradlew.bat bundleRelease",
+    "ios:open": "cap open ios"
+  },
+  "keywords": [
+    "pwa",
+    "chat",
+    "cross-platform",
+    "messenger",
+    "file-sharing",
+    "socketio",
+    "realtime",
+    "mobile-app"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/core": "^8.5.3",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mime-types": "^2.1.35",
+    "multer": "^1.4.5-lts.1",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/ios": "^8.5.3"
+  }
+}
